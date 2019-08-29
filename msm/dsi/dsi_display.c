@@ -3159,7 +3159,8 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 			flags |= DSI_CTRL_CMD_READ;
 		rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
 				cmd_flags);
-		if (rc) {
+		if (((flags & DSI_CTRL_CMD_READ) && rc <= 0) ||
+				(!(flags & DSI_CTRL_CMD_READ) && rc)) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
 			goto error_disable_cmd_engine;
