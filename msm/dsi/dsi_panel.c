@@ -4870,12 +4870,6 @@ int dsi_panel_mode_switch_to_vid(struct dsi_panel *panel)
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
-#if defined(CONFIG_DRM_DYNAMIC_REFRESH_RATE)
-	/* notify consumers only if refresh rate has been updated */
-	if (!rc)
-		blocking_notifier_call_chain(&dsi_freq_head,
-			(unsigned long)panel->cur_mode->timing.refresh_rate, NULL);
-#endif
 	return rc;
 }
 
@@ -4896,6 +4890,13 @@ int dsi_panel_switch(struct dsi_panel *panel)
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
+#if defined(CONFIG_DRM_DYNAMIC_REFRESH_RATE)
+	/* notify consumers only if refresh rate has been updated */
+	if (!rc) {
+		blocking_notifier_call_chain(&dsi_freq_head,
+			(unsigned long)panel->cur_mode->timing.refresh_rate, NULL);
+	}
+#endif
 	return rc;
 }
 
