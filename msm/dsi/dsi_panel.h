@@ -317,6 +317,7 @@ struct dsi_panel {
 
 	enum touch_state tp_state;
 	bool tp_state_check_enable;
+	bool boe_nt37800_dcmode_workaround;
 
 	int panel_recovery_retry;
 	bool is_panel_dead;

@@ -3844,6 +3844,9 @@ static int dsi_panel_parse_mot_panel_config(struct dsi_panel *panel,
 
 	panel->tp_state_check_enable = of_property_read_bool(of_node,
 				"qcom,tp_state_check_enable");
+
+	panel->boe_nt37800_dcmode_workaround = of_property_read_bool(of_node,
+				"qcom,boe_nt37800_dcmode_workaround");
 	return rc;
 }
 
