@@ -5093,7 +5093,8 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		       panel->name, rc);
 		goto err;
 	}
-
+        if (panel->boe_nt37800_dcmode_workaround)
+	        dsi_panel_gamma_work_around(panel);
 	if (!panel->no_panel_on_read_support) {
 		rc = dsi_panel_get_pwr_mode(panel, &pwr_mode);
 		if (rc) {

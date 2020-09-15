@@ -39,6 +39,7 @@
 #include "sde_dbg.h"
 #include "dsi_parser.h"
 #include "dsi_display_mot_ext.h"
+#include <video/mipi_display.h>
 
 static struct dsi_mot_ext_feature *g_dsi_mot_ext = NULL;
 static int g_early_power_count = 0;
@@ -1232,4 +1233,142 @@ int dsi_display_ext_init(struct dsi_display *display)
 
 	return rc;
 }
+static int dsi_panel_write_reg(struct dsi_panel *panel, u8 *val, size_t len){
 
+	int rc = 0;
+	struct dsi_cmd_desc cmd;
+	struct dsi_display *display = NULL;
+	u32 flags = 0;
+
+	printk("write %s, %d\n", __func__, __LINE__);
+
+	display = container_of(panel->host, struct dsi_display, host);
+	if (!display) {
+		DSI_ERR("failed to retrieve display handle\n", display);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	memset(&cmd, 0x00, sizeof(struct dsi_cmd_desc));
+	//flags = DSI_CTRL_CMD_WRITE;
+
+        switch (len) {
+        case 0:
+                return -EINVAL;
+
+        case 1:
+                cmd.msg.type = MIPI_DSI_DCS_SHORT_WRITE;
+                break;
+
+        case 2:
+                cmd.msg.type = MIPI_DSI_DCS_SHORT_WRITE_PARAM;
+                break;
+
+        default:
+                cmd.msg.type = MIPI_DSI_DCS_LONG_WRITE;
+                break;
+        }
+
+	cmd.last_command = 1;
+	cmd.msg.flags = MIPI_DSI_MSG_LASTCOMMAND;
+	cmd.msg.channel = 0;
+
+	cmd.msg.tx_len = len;
+	cmd.msg.tx_buf = val;
+
+	rc = dsi_display_cmd_mipi_transfer(display, &cmd.msg, flags);
+	if (rc <= 0) {
+		DSI_ERR("Failed to call dsi_display_cmd_transfer. rc=%d\n", rc);
+		rc = -EIO;
+	} else
+		rc = 0;
+	printk("%s, %d\n", __func__, __LINE__);
+
+end:
+	return rc;
+}
+static int dsi_panel_read_reg(struct dsi_panel *panel, u8 *val, u8 regAddr,size_t len){
+
+	int rc = 0;
+	struct dsi_cmd_desc cmd;
+	struct dsi_display *display = NULL;
+	u32 flags = 0;
+	u8 payload = regAddr;
+	//u32 *rx_buf;
+       int i;
+
+	display = container_of(panel->host, struct dsi_display, host);
+	if (!display) {
+		DSI_ERR("failed to retrieve display handle\n", display);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	memset(&cmd, 0x00, sizeof(struct dsi_cmd_desc));
+	flags = DSI_CTRL_CMD_READ;
+
+	cmd.msg.type = MIPI_DSI_DCS_READ;
+	cmd.last_command = 1;
+	cmd.msg.flags = MIPI_DSI_MSG_LASTCOMMAND;
+	cmd.msg.channel = 0;
+
+	cmd.msg.tx_len = 1;
+	cmd.msg.tx_buf = &payload;
+	cmd.msg.rx_len = len;
+	cmd.msg.rx_buf = val;
+
+	rc = dsi_display_cmd_mipi_transfer(display, &cmd.msg, flags);
+	if (rc <= 0) {
+		DSI_ERR("Failed to call dsi_display_cmd_transfer. rc=%d\n", rc);
+		rc = -EIO;
+	} else
+		rc = 0;
+
+	for(i = len;i>0;i--){
+		val[i] = val[i-1];
+	}
+	val[0] = regAddr;
+end:
+	return rc;
+}
+
+int dsi_panel_gamma_work_around(struct dsi_panel *panel){
+	int rc = 0;
+	int count = 0;
+	int i;
+	u8 Page0[] = {0xF0,0x55,0xAA,0x52,0x08,0x02};
+	u8 Page1[] = {0xbf,0x15};
+	u8 Page2[]= {0xbf,0x18};
+
+	if (!panel) {
+		DSI_ERR("Invalid params\n");
+		return -EINVAL;
+	}
+	if (panel->boe_gamma_read == false) {
+		dsi_panel_write_reg(panel, Page0, 6);
+		dsi_panel_write_reg(panel, Page1, 2);
+		for (i = 0; i < MAX_GAMMA_REG_CONT; i ++) {
+                      if ((i + 1) %3 == 0)
+                              count = 0x16;
+                      else
+                              count= 0x18;
+                      memset(&panel->boe_gamma_read_val[i], 0,
+                              sizeof(panel->boe_gamma_read_val[i]));
+                      dsi_panel_read_reg(panel, panel->boe_gamma_read_val[i], 0xb0+ i,count);
+               }
+		panel->boe_gamma_read = true;
+	}
+
+	dsi_panel_write_reg(panel, Page0, 6);
+	dsi_panel_write_reg(panel, Page2, 2);
+	for (i = 0;i < MAX_GAMMA_REG_CONT;i ++) {
+		if ((i + 1) %3 == 0)
+                      count = 0x17;
+		else
+                      count= 0x19;
+		dsi_panel_write_reg(panel, panel->boe_gamma_read_val[i], count);
+	}
+	printk("%s, %d\n", __func__, __LINE__);
+	DSI_INFO("(%s)-\n", panel->name);
+	return rc;
+}

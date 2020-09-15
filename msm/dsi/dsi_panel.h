@@ -43,6 +43,9 @@
 #define HBM_BRIGHTNESS(value) ((value) == HBM_OFF_STATE ?\
 			BRIGHTNESS_HBM_OFF : BRIGHTNESS_HBM_ON)
 
+#define MAX_GAMMA_VALUE_CONT 30
+#define MAX_GAMMA_REG_CONT 9
+
 /* HBM implementation is different, depending on display and backlight hardware
  * design, which is classified into the following types:
  * HBM_TYPE_OLED: OLED panel, HBM is controlled by DSI register only, which
@@ -321,6 +324,8 @@ struct dsi_panel {
 
 	int panel_recovery_retry;
 	bool is_panel_dead;
+	u8  boe_gamma_read_val[MAX_GAMMA_REG_CONT][MAX_GAMMA_VALUE_CONT];
+	bool boe_gamma_read;
 };
 
 bool dsi_display_all_displays_dead(void);

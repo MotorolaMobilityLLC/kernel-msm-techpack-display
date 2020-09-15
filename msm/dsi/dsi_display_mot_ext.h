@@ -62,5 +62,6 @@ struct dsi_mot_ext_feature {
  * Return: error code.
  */
 int dsi_display_ext_init(struct dsi_display *display);
+int dsi_panel_gamma_work_around(struct dsi_panel *panel);
 
 #endif /* _DSI_DISPLAY_MOT_EXT_H_ */
