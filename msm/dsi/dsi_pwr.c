@@ -22,6 +22,7 @@ static int dsi_pwr_parse_supply_node(struct dsi_parser_utils *utils,
 	int i = 0;
 	u32 tmp = 0;
 	struct device_node *node = NULL;
+	bool is_always_on = FALSE;
 
 	dsi_for_each_child_node(root, node) {
 		const char *st = NULL;
@@ -105,6 +106,14 @@ static int dsi_pwr_parse_supply_node(struct dsi_parser_utils *utils,
 			regs->vregs[i].post_off_sleep = tmp;
 		}
 
+		is_always_on = utils->read_bool(node, "qcom,supply-always-on");
+		if (!is_always_on) {
+			DSI_DEBUG("qcom,supply-always-on not specified\n");
+		} else {
+			regs->vregs[i].is_always_on = is_always_on;
+			DSI_INFO("%s: always-on is specified\n", regs->vregs[i].vreg_name);
+		}
+
 		DSI_DEBUG("[%s] minv=%d maxv=%d, en_load=%d, dis_load=%d\n",
 			 regs->vregs[i].vreg_name,
 			 regs->vregs[i].min_voltage,
@@ -174,6 +183,12 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 			vreg = &regs->vregs[i];
 			pre_off_ms = vreg->pre_off_sleep;
 			post_off_ms = vreg->post_off_sleep;
+
+			if (vreg->is_always_on)
+			{
+				DSI_INFO("%s is always on\n", vreg->vreg_name);
+				continue;
+			}
 
 			if (pre_off_ms)
 				usleep_range((pre_off_ms * 1000),
