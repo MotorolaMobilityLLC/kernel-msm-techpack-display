@@ -603,12 +603,38 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 		}
 	}
 
+    if(panel->reset_config.custom_reset_seq) {
+		if (gpio_is_valid(r_config->tp_rst_gpio)) {
+		    DSI_INFO("set tp reset level to 0\n");
+			gpio_set_value(r_config->tp_rst_gpio, 0);
+		}
+		usleep_range(5 * 1000, (5 * 1000) + 100);
+		if (gpio_is_valid(r_config->reset_gpio)) {
+		    DSI_INFO("set lcd reset level to 0\n");
+			gpio_set_value(r_config->reset_gpio, 0);
+		}
+		usleep_range(5 * 1000, (5 * 1000) + 100);
+	}
+
 	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
 	if (rc) {
 		DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
 				panel->name, rc);
 		goto exit;
 	}
+
+    if(panel->reset_config.custom_reset_seq) {
+		usleep_range(20 * 1000, (20 * 1000) + 100);
+		if (gpio_is_valid(r_config->tp_rst_gpio)) {
+		    DSI_INFO("set tp reset level to 1\n");
+			gpio_set_value(r_config->tp_rst_gpio, 1);
+		}
+		usleep_range(1 * 1000, (1 * 1000) + 100);
+		if (gpio_is_valid(r_config->reset_gpio)) {
+		    DSI_INFO("set lcd reset level to 1\n");
+			gpio_set_value(r_config->reset_gpio, 1);
+		}
+ 	}
 
 	rc = dsi_panel_set_pinctrl_state(panel, true);
 	if (rc) {
@@ -2656,6 +2682,9 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 
 	panel->reset_config.tp_rst_gpio = utils->get_named_gpio(utils->data,
 					"qcom,mdss-dsi-tp-rst-gpio", 0);
+
+	panel->reset_config.custom_reset_seq = utils->read_bool(utils->data,
+						"qcom,platform-tp-reset-enable");
 
 	panel->reset_config.disp_en_gpio = utils->get_named_gpio(utils->data,
 						"qcom,5v-boost-gpio",
