@@ -399,6 +399,7 @@ struct msm_param_info {
  * @half_panel_pu            True for single and dual dsc encoders if partial
  *                           update sets the roi width to half of mode width
  *                           False in all other cases
+ * @datatype:                data type of compressed image
  */
 struct msm_display_dsc_info {
 	struct drm_dsc_config config;
@@ -421,6 +422,7 @@ struct msm_display_dsc_info {
 	u32 dsc_4hsmerge_padding;
 	u32 dsc_4hsmerge_alignment;
 	bool half_panel_pu;
+	int datatype;
 };
 
 
