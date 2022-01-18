@@ -112,6 +112,8 @@ struct dsi_phy_cfg {
 	bool force_clk_lane_hs;
 	enum dsi_phy_type phy_type;
 	unsigned long bit_clk_rate_hz;
+	int dsi_phy_rescode_top;
+	int dsi_phy_rescode_bot;
 };
 
 struct dsi_phy_hw;
