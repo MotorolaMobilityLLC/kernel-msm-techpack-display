@@ -7573,6 +7573,22 @@ int dsi_display_get_modes(struct dsi_display *display,
 			goto error;
 		}
 
+		/*
+		 * Now we know the DSC enable status of the timing mode, we can correct the
+		 * host_config.dst_format for compressed RGB101010 pixel format.
+		 * Assumption: all the timing modes have the same DSC enable status.
+		 */
+		DSI_INFO("DEBUG: mode_idx %d, bpp %d, dst_format %d, dsc %d\n",
+			mode_idx, display->panel->host_config.bpp,
+			display->panel->host_config.dst_format,
+			display_mode.timing.dsc_enabled);
+		if (display->panel->host_config.dst_format == DSI_PIXEL_FORMAT_RGB101010 &&
+			display_mode.timing.dsc_enabled) {
+			display->panel->host_config.dst_format = DSI_PIXEL_FORMAT_RGB888;
+			DSI_INFO("DEBUG: updated dst_format to %d (RGB888)\n",
+				display->panel->host_config.dst_format);
+		}
+
 		is_cmd_mode = (display_mode.panel_mode == DSI_OP_CMD_MODE);
 
 		/* Setup widebus support */
