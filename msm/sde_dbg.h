@@ -88,7 +88,7 @@ enum sde_dbg_dump_context {
  * sysfs node or panic. This prevents kernel log from evtlog message
  * flood.
  */
-#define SDE_EVTLOG_PRINT_ENTRY	512
+#define SDE_EVTLOG_PRINT_ENTRY	256
 
 /*
  * evtlog keeps this number of entries in memory for debug purpose. This
@@ -139,7 +139,7 @@ extern struct sde_dbg_evtlog *sde_dbg_base_evtlog;
  * number must be greater than number of possible writes in at least one
  * single commit.
  */
-#define SDE_REGLOG_ENTRY 2048
+#define SDE_REGLOG_ENTRY 1024
 
 struct sde_dbg_reglog_log {
 	s64 time;
